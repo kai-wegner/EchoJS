@@ -1,0 +1,11 @@
+var config = {
+	"henkel-dev-rest": {
+		"port":"9999",
+		"echoPort":"80",
+		"endpoint":{
+			"host":"localhost",
+			"port":"3000"
+		}
+	}
+}
+config
