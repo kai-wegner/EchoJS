@@ -1,5 +1,5 @@
 var http 	= require("http"),
-	fs		= require("fs")
+		fs		= require("fs")
 
 var configFileContent = fs.readFileSync("config.json","utf-8")
 
@@ -8,10 +8,11 @@ var echoJSConfig = eval(configFileContent)
 var int = 0;
 for(var key in echoJSConfig) {
 	var proxyConfig = echoJSConfig[key]
-	
-	var proxyPort	= proxyConfig.port
-	var endpoint 	= proxyConfig.endpoint
-	var echoPort	= proxyConfig.echoPort
+
+	proxyConfig.name = key;
+	var proxyPort	= proxyConfig.port;
+	var endpoint 	= proxyConfig.endpoint;
+	var echoPort	= proxyConfig.echoPort;
 
 	if(proxyPort != null) {
 		var proxyServer = http.createServer(function(req,res) {
@@ -39,18 +40,51 @@ for(var key in echoJSConfig) {
 		proxyServer.listen(proxyPort)
 	}
 	if(echoPort != null) {
-		var echoServer = http.createServer(function(req,res) {
-			var fileName = getProxyFileName(key,req)
-			res.end(fs.readFileSync(fileName))
-		})
-		echoServer.listen(echoPort)
+	  var echoServer = http.createServer(function(req,res) {
+	    var fileName = getProxyFileName(proxyConfig,req);
+			try {
+				var discoveredResponseType = discoverType(proxyConfig,fileName);
+				if(discoveredResponseType != null)
+					res.setHeader("Content-Type", discoveredResponseType);
+
+				fs.readFile(fileName,function(err,response) {
+					if(err == null) {
+						var myresponse = response.toString().replace(/\s*?\/\/.*?\n/g,"")
+						
+						res.end(myresponse);
+					}
+					else
+						res.end("could not deliver echo because of: "+err);
+				});
+			}
+	    catch (exception) {
+				res.end("could not deliver echo because of: "+exception);
+			}
+	  });
+    echoServer.listen(echoPort);
+		console.log("Echo Server for \""+key+"\" listining on port: "+echoPort);
 	}
 
 }
 
-function getProxyFileName(folder, req) {
-	if(!fs.existsSync(folder))
-		fs.mkdirSync(folder)
+function discoverType(config,fileName) {
+	if(config.returnTypes != null) {
+		for(var typeConfig in config.returnTypes) {
+			if(fileName.match(config.returnTypes[typeConfig].regEx) != null)
+				return config.returnTypes[typeConfig].type;
 
-	return folder+"/"+req.url.replace(/\//g,"@@")+"_"+req.method
+		}
+	}
+	if(config.defaultReturnType != null)
+		return config.defaultReturnType;
+
+	return null;
+}
+
+function getProxyFileName(config, req) {
+	var directory = config.directory+"/"+config.name;
+	if(!fs.existsSync(directory))
+		fs.mkdirSync(directory)
+
+	return directory+"/"+req.url.replace(/\//g,"@@")+"_"+req.method
 }

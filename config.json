@@ -1,11 +1,26 @@
 var config = {
-	"henkel-dev-rest": {
+
+  "debtMan": {
+    "echoPort" :"8080",
+    "directory":"/Users/kai/git-repositories/debtMan/REST-Mocks",
+    "returnTypes":[
+      {"regEx":/.*/g,"type":"application/json"}
+    ]
+  }
+
+/*
+	"full-example": {
 		"port":"9999",
 		"echoPort":"80",
+		"directory":"somewhere in a absolute path",
+		"returnTypes":[{"regEx":/some/reg/g,"type":"application/json"}],
+		"defaultType":"application/json",
 		"endpoint":{
 			"host":"localhost",
 			"port":"3000"
 		}
+
 	}
+*/
 }
 config
